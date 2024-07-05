@@ -1,0 +1,13 @@
+[Unit]
+Description=Run and Manage Flask Server API
+After=network.target sethostapdinfo.service
+
+[Service]
+WorkingDirectory=/home/pi/flaskrestapi
+Environment="PATH=/usr/bin"
+ExecStart=/usr/bin/python3 /home/pi/flaskrestapi/main.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
