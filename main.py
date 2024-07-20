@@ -124,7 +124,6 @@ app.register_blueprint(openthreadutils_bp)
 app.register_blueprint(services_bp)
 app.register_blueprint(systemutils_bp)
 app.register_blueprint(currentconfig_bp)
-app.register_blueprint(bangleutils_bp)
 app.register_blueprint(calibration_bp)
 app.register_blueprint(rooms_bp)
 
