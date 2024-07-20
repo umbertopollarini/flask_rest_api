@@ -139,11 +139,6 @@ if __name__ == "__main__":
         tasks = [
             loop.create_task(install_packages_chmod('npm i', './route/BangleOTA/')),
             loop.create_task(install_packages_chmod('npm i -g http-server', '.')),
-            loop.create_task(install_packages_chmod('chmod +x ./BangleApps/run.sh', '.')),
-            loop.create_task(install_packages_chmod('chmod +x ./EspruinoApps/run.sh', '.')),
-            loop.create_task(install_packages_chmod('chmod +x ./BangleApps/bin/create_apps_json.sh', '.')),
-            loop.create_task(ota_server_task('./BangleApps/')),
-            loop.create_task(ota_server_task('./EspruinoApps/')),
         ]
 
         loop.run_until_complete(asyncio.wait(tasks))
