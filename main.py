@@ -13,7 +13,6 @@ from route.openthreadutils import openthreadutils_bp
 from route.services import services_bp
 from route.systemutils import systemutils_bp
 from route.currentconfig import currentconfig_bp
-from route.bangleutils import bangleutils_bp
 from route.calibration import calibration_bp
 from route.rooms import rooms_bp
 from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
