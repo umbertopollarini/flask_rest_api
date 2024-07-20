@@ -8,7 +8,7 @@ from firebase_admin import credentials, firestore, initialize_app
 
 # Define the blueprint
 rooms_bp = Blueprint('rooms', __name__)
-cred = credentials.Certificate('/home/pi/flaskrestapi/config_fb.json')
+cred = credentials.Certificate('/home/pi/flask_rest_api/config_fb.json')
 default_app = initialize_app(cred)
 db = firestore.client()
 
