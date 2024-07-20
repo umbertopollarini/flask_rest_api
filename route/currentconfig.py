@@ -725,16 +725,17 @@ def get_log_devices():
 @currentconfig_bp.route('/current/devices_timestamps')
 def get_devices_timestamps():
     devices, error = read_device_config()
-    if (error):
+    if error:
         return jsonify({"error": error}), 404
 
     # Filter out devices of type "bs02"
     devices = [device for device in devices if device['type'].lower() != 'bs02']
 
     try:
-        conn = get_db_connection()
-
-        cursor = conn.cursor()
+        conn_historic = get_db_connection()
+        conn_positioning = get_db_positioning_connection()
+        cursor_historic = conn_historic.cursor()
+        cursor_positioning = conn_positioning.cursor()
 
         result = {}
 
@@ -742,44 +743,68 @@ def get_devices_timestamps():
             mac_address = device['mac']
             last_timestamp_puck = None
             last_timestamp_positioning = None
+            last_position = None
+            room_name = "Unknown"  # Default room name
 
             # Get last timestamp from datistorici_* table
-            if (device['type'] == "puckjs2"):
-                cursor.execute('''
-                SELECT timestamp
-                FROM datistorici_puck
-                WHERE mac = ?
-                ORDER BY timestamp DESC
-                LIMIT 1
+            if device['type'] == "puckjs2":
+                cursor_historic.execute('''
+                    SELECT timestamp
+                    FROM datistorici_puck
+                    WHERE mac = ?
+                    ORDER BY timestamp DESC
+                    LIMIT 1
                 ''', (mac_address,))
-                last_timestamp_puck_row = cursor.fetchone()
+                last_timestamp_puck_row = cursor_historic.fetchone()
                 last_timestamp_puck = int(last_timestamp_puck_row['timestamp']) if last_timestamp_puck_row else None
-            elif (device['type'] == "banglejs2"):
-                cursor.execute('''
-                SELECT timestamp
-                FROM datistorici_bangle
-                WHERE mac = ?
-                ORDER BY timestamp DESC
-                LIMIT 1
+            elif device['type'] == "banglejs2":
+                cursor_historic.execute('''
+                    SELECT timestamp
+                    FROM datistorici_bangle
+                    WHERE mac = ?
+                    ORDER BY timestamp DESC
+                    LIMIT 1
                 ''', (mac_address,))
-                last_timestamp_puck_row = cursor.fetchone()
+                last_timestamp_puck_row = cursor_historic.fetchone()
                 last_timestamp_puck = int(last_timestamp_puck_row['timestamp']) if last_timestamp_puck_row else None
 
             # Get last timestamp from datistorici_positioning table
-            cursor.execute('''
+            cursor_historic.execute('''
                 SELECT timestamp
                 FROM datistorici_positioning
                 WHERE macBangle = ? AND rssiBangle != 0
                 ORDER BY timestamp DESC
                 LIMIT 1
             ''', (mac_address,))
-            last_timestamp_positioning_row = cursor.fetchone()
+            last_timestamp_positioning_row = cursor_historic.fetchone()
             last_timestamp_positioning = int(last_timestamp_positioning_row['timestamp']) if last_timestamp_positioning_row else None
+
+            # Get last position id from predictions table
+            cursor_positioning.execute('''
+                SELECT predicted_room
+                FROM predictions
+                WHERE mac_device = ?
+                ORDER BY timestamp DESC
+                LIMIT 1
+            ''', (mac_address,))
+            last_position_row = cursor_positioning.fetchone()
+            if last_position_row:
+                last_position_id = last_position_row['predicted_room']
+                # Fetch the room name using the last position id
+                cursor_positioning.execute('''
+                    SELECT room_name
+                    FROM rooms_info
+                    WHERE id = ?
+                ''', (last_position_id,))
+                room_name_row = cursor_positioning.fetchone()
+                if room_name_row:
+                    room_name = room_name_row['room_name']
 
             result[mac_address] = {
                 "ipv6": device.get("ipv6", ""),
                 "last_timestamp_positioning": last_timestamp_positioning,
                 "last_timestamp_puck": last_timestamp_puck,
+                "last_position": room_name,
                 "location": device.get("location", ""),
                 "name": device.get("name", ""),
                 "type": device.get("type", ""),
@@ -794,4 +819,49 @@ def get_devices_timestamps():
     except FileNotFoundError as e:
         return jsonify({"error": str(e)}), 404
     finally:
-        conn.close()
+        if 'conn_historic' in locals():
+            conn_historic.close()
+        if 'conn_positioning' in locals():
+            conn_positioning.close()
+
+@currentconfig_bp.route('/current/setdevicesroles', methods=['POST'])
+def set_device_role():
+    # Legge i dati inviati dal client
+    data = request.get_json()
+    mac_address = data.get('macAddress')
+    new_role = data.get('role')
+
+    config_path = '/home/pi/shared_dir/config.json'
+
+    if not os.path.exists(config_path):
+        return jsonify({'error': 'Config file not found'}), 404
+
+    try:
+        # Carica i dati esistenti da config.json
+        with open(config_path, 'r') as file:
+            config_data = json.load(file)
+        
+        # Controlla se l'elenco dei dispositivi è presente
+        devices = config_data.get('devices', [])
+        device_found = False
+
+        # Aggiorna il ruolo del dispositivo corrispondente
+        for device in devices:
+            if device['mac'] == mac_address:
+                device['role'] = new_role  # Aggiungi o aggiorna il campo ruolo
+                device_found = True
+                break
+        
+        if not device_found:
+            return jsonify({'error': 'Device with specified MAC address not found'}), 404
+
+        # Salva i dati aggiornati in config.json
+        with open(config_path, 'w') as file:
+            json.dump(config_data, file, indent=4)
+
+        return jsonify({'message': 'Device role updated successfully'})
+
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Error decoding JSON data'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
