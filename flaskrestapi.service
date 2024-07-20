@@ -3,9 +3,9 @@ Description=Run and Manage Flask Server API
 After=network.target sethostapdinfo.service
 
 [Service]
-WorkingDirectory=/home/pi/flaskrestapi
+WorkingDirectory=/home/pi/flask_rest_api
 Environment="PATH=/usr/bin"
-ExecStart=/usr/bin/python3 /home/pi/flaskrestapi/main.py
+ExecStart=/usr/bin/python3 /home/pi/flask_rest_api/main.py
 Restart=always
 User=root
 
