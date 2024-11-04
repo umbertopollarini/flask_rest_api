@@ -104,12 +104,6 @@ def handle_disconnect():
             # Assicurati di interrompere lo streaming specifico per questo client
             stop_streaming_for_client(client_id)
 
-async def ota_server_task(cwd):
-	process = await asyncio.create_subprocess_shell('/bin/bash run.sh', cwd=cwd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE )
-	stdout, stderr = await process.communicate()
-	print(stdout.decode('utf-8'))
-	print(stderr.decode('utf-8'))
-
 async def install_packages_chmod(cmd, cwd):
     process = await asyncio.create_subprocess_shell(cmd, cwd=cwd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     stdout, stderr = await process.communicate()
@@ -137,7 +131,6 @@ if __name__ == "__main__":
         loop = asyncio.get_event_loop()
         # subprocess.Popen("sudo sh -c 'sudo chmod +x ./mcumgr'",  shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tasks = [
-            loop.create_task(install_packages_chmod('npm i', './route/BangleOTA/')),
             loop.create_task(install_packages_chmod('npm i -g http-server', '.')),
         ]
 

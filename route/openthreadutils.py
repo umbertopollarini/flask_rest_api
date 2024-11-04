@@ -442,29 +442,3 @@ def add_openthread_joiner():
     except Exception as e:
         # Return an error message if an exception occurred
         return jsonify({'[Exception] error': str(e)})
-    
-@openthreadutils_bp.route('/openthread/bs02ota', methods=['POST'])
-def bs02_ota():
-    """
-    BS02 OTA
-
-    """
-    try:
-        from flask import request
-        data = request.get_json()
-        mac = data['mac']
-        ver = data['v']
-        firmwarePath = data['firmwarePath']
-        
-        command1 = 'node index.js ' + mac + ' ' + ver + ' ' + firmwarePath
-        process1 = subprocess.Popen(command1, shell=True, cwd='./route/BangleOTA/', stderr=subprocess.PIPE)
-        _, error = process1.communicate()
-        if process1.returncode != 0:
-            # Return an error message if the command failed
-            return jsonify({'error': 'Failed to ota update BS02: ' + error.decode('utf-8')})
-        else:
-            return jsonify({'message': 'BS02 ota update completed'})
-
-    except Exception as e:
-        # Return an error message if an exception occurred
-        return jsonify({'[Exception] error': str(e)})
