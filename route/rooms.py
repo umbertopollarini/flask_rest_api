@@ -4,13 +4,13 @@ import json
 import datetime
 import netifaces
 import base64
-from firebase_admin import credentials, firestore, initialize_app
+# from firebase_admin import credentials, firestore, initialize_app
 
 # Define the blueprint
 rooms_bp = Blueprint('rooms', __name__)
-cred = credentials.Certificate('/home/pi/flask_rest_api/config_fb.json')
-default_app = initialize_app(cred)
-db = firestore.client()
+# cred = credentials.Certificate('/home/pi/flask_rest_api/config_fb.json')
+# default_app = initialize_app(cred)
+# db = firestore.client()
 
 @rooms_bp.route('/rooms/configurations')
 def get_room_configurations():
@@ -148,9 +148,9 @@ def add_floor():
 
         # Update Firebase
         area_map = {str(inserted_ids[i]): str(floordetails[i]['room_name']) for i in range(len(floordetails))}
-        firebase_path = f"organization/{str(organization_id)}/network/{str(mac_eth0)}/calibration/current/piani/{str(detail['floor_id'])}"
-        doc_ref = db.document(firebase_path)
-        doc_ref.set({"area": area_map, "nome": str(detail['floor_name'])}, merge=True)
+        # firebase_path = f"organization/{str(organization_id)}/network/{str(mac_eth0)}/calibration/current/piani/{str(detail['floor_id'])}"
+        # doc_ref = db.document(firebase_path)
+        # doc_ref.set({"area": area_map, "nome": str(detail['floor_name'])}, merge=True)
 
         # Return success message
         return jsonify({"success": "Floor details added successfully."}), 201
@@ -277,16 +277,16 @@ def delete_floor():
             return jsonify({"error": "Could not retrieve MAC address for eth0"}), 500
 
         # Construct Firebase path
-        firebase_path = f"organization/{organization_id}/network/{mac_eth0}/calibration/current/piani/{floor_id}"
+        # firebase_path = f"organization/{organization_id}/network/{mac_eth0}/calibration/current/piani/{floor_id}"
 
-        # Delete the records with the specified floor_id in SQLite
-        delete_query = "DELETE FROM rooms_info WHERE floor_id = ?"
-        cursor.execute(delete_query, (floor_id,))
-        conn.commit()
+        # # Delete the records with the specified floor_id in SQLite
+        # delete_query = "DELETE FROM rooms_info WHERE floor_id = ?"
+        # cursor.execute(delete_query, (floor_id,))
+        # conn.commit()
 
         # Delete the document in Firebase
-        doc_ref = db.document(firebase_path)
-        doc_ref.delete()
+        # doc_ref = db.document(firebase_path)
+        # doc_ref.delete()
 
         return jsonify({"success": "Floor deleted successfully."}), 200
 
